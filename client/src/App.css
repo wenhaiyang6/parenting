@@ -9,11 +9,27 @@
   margin-bottom: 30px;
 }
 
-form {
+/* Main layout */
+.main-container {
+  display: flex;
+  gap: 20px;
+}
+
+.sidebar {
+  width: 250px;
+  flex-shrink: 0;
+}
+
+.chat-area {
+  flex-grow: 1;
+}
+
+/* Form elements */
+.input-form {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 30px;
+  margin-top: 20px;
 }
 
 textarea {
@@ -21,6 +37,7 @@ textarea {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 16px;
+  min-height: 100px;
 }
 
 button {
@@ -37,26 +54,116 @@ button:hover {
   background-color: #0056b3;
 }
 
-.question-card {
+/* Conversation styles */
+.conversations-list {
+  margin-top: 20px;
+}
+
+.conversation-item {
+  padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
 }
 
-.timestamp {
+.conversation-item:hover {
+  background-color: #f8f9fa;
+}
+
+.conversation-item.active {
+  border-color: #007bff;
+  background-color: #f8f9ff;
+}
+
+/* Message styles */
+.message-wrapper {
+  margin-bottom: 20px;
+}
+
+.user-message,
+.assistant-message {
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.user-message {
+  background-color: #f8f9fa;
+}
+
+.assistant-message {
+  background-color: #e9ecef;
+}
+
+/* Markdown content styling */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content p {
+  margin: 1em 0;
+  line-height: 1.6;
+}
+
+.markdown-content pre {
+  background-color: #f4f4f4;
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.markdown-content code {
+  background-color: #f4f4f4;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #ccc;
+  margin: 1em 0;
+  padding-left: 1em;
+  color: #666;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.markdown-content li {
+  margin: 0.5em 0;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #f4f4f4;
+}
+
+small {
   color: #666;
   font-size: 0.9em;
-}
-
-.answer {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-}
-
-.answer h4 {
-  margin: 0 0 10px 0;
-  color: #0056b3;
+  display: block;
+  margin-top: 5px;
 }
