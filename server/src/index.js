@@ -2,15 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const OpenAI = require('openai');
+const corsOptions = require('./config/cors');
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.post('/api/ask/stream', async (req, res) => {

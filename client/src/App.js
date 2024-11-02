@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import { getApiUrl } from './config/api';
 
 function App() {
   const [question, setQuestion] = useState('');
@@ -24,7 +25,7 @@ function App() {
       setQuestion('');
 
       try {
-        const response = await fetch('http://localhost:3001/api/ask/stream', {
+        const response = await fetch(getApiUrl('/api/ask/stream'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

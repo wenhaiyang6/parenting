@@ -1,5 +1,5 @@
 {
-  "name": "parenting-qa-app",
+  "name": "parenting-qa-app-client",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
