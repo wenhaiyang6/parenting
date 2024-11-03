@@ -201,6 +201,7 @@ router.post('/stream', async (req, res) => {
 
     res.write('data: [DONE]\n\n');
     res.end();
+    console.log('Full answer:', fullAnswer);
 
     // Update the message with the complete answer and sources
     conversation.messages[conversation.messages.length - 1].answer = fullAnswer;

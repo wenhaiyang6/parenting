@@ -218,15 +218,15 @@ small {
   border-radius: 4px;
 }
 
-.sources-header {
+.other-sources-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  margin-bottom: 0.5rem;
+  margin: 0.5rem 0;
 }
 
-.sources-header h4 {
+.other-sources-header h5 {
   margin: 0;
   color: #666;
 }
@@ -257,7 +257,15 @@ small {
 }
 
 .sources-section li {
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-favicon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .sources-section a {
@@ -325,4 +333,10 @@ small {
   text-align: center;
   margin-top: 10px;
   font-size: 0.9em;
+}
+
+.sources-section h5 {
+  margin: 10px 0 5px;
+  font-size: 0.9em;
+  color: #666;
 }

@@ -53,14 +53,53 @@ function App() {
   const processMarkdownWithCitations = (text, sources) => {
     if (!text || !sources) return text;
     
-    // Replace citation numbers with links
+    // Track citation order and create a map of used citations
+    const citationOrder = [];
+    const usedCitations = new Set();
+    
+    // First pass: find all citations in order
+    const citationRegex = /\[(\d+)\]/g;
+    let match;
+    while ((match = citationRegex.exec(text)) !== null) {
+      const citationIndex = parseInt(match[1]) - 1;
+      if (citationIndex >= 0 && citationIndex < sources.length) {
+        usedCitations.add(citationIndex);
+        if (!citationOrder.includes(citationIndex)) {
+          citationOrder.push(citationIndex);
+        }
+      }
+    }
+
+    // Reorder sources: cited ones first (in order of appearance), then uncited ones
+    const reorderedSources = [
+      ...citationOrder.map(index => ({ ...sources[index], isCited: true })),
+      ...sources
+        .map((source, index) => ({ ...source, isCited: false, originalIndex: index }))
+        .filter((_, index) => !usedCitations.has(index))
+    ];
+
+    // Replace old citation numbers with new ones
     let processedText = text;
-    sources.forEach((source, index) => {
+    const citationMap = new Map();
+    citationOrder.forEach((oldIndex, newIndex) => {
+      citationMap.set(oldIndex, newIndex);
+    });
+
+    // Replace citations in text with new numbers
+    processedText = processedText.replace(/\[(\d+)\]/g, (match, oldNum) => {
+      const oldIndex = parseInt(oldNum) - 1;
+      const newIndex = citationMap.get(oldIndex);
+      return `[${newIndex + 1}]`;
+    });
+
+    // Update links
+    reorderedSources.forEach((source, index) => {
       const citation = `[${index + 1}]`;
       const link = `[${citation}](${source.link})`;
       processedText = processedText.replace(new RegExp(`\\[${citation}\\]`, 'g'), link);
     });
-    return processedText;
+
+    return { processedText, reorderedSources };
   };
 
   const handleSubmit = async (e) => {
@@ -216,6 +255,15 @@ function App() {
   // Add a ref for the textarea
   const textareaRef = useRef(null);
 
+  const getFaviconUrl = (sourceUrl) => {
+    try {
+      const url = new URL(sourceUrl);
+      return `https://www.google.com/s2/favicons?domain=${url.hostname}`;
+    } catch (e) {
+      return null;
+    }
+  };
+
   return (
     <div className="App">
       <aside className="sidebar">
@@ -274,37 +322,90 @@ function App() {
                       <div className="assistant-message">
                         {msg.sources && msg.sources.length > 0 && (
                           <div className="sources-section">
-                            <div 
-                              className="sources-header"
-                              onClick={() => setExpandedSources(prev => ({
-                                ...prev,
-                                [msg.id]: !prev[msg.id]
-                              }))}
-                            >
-                              <button 
-                                className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
-                              >
-                                ▶
-                              </button>
-                              <h4>Sources ({msg.sources.length})</h4>
-                            </div>
-                            {expandedSources[msg.id] && (
-                              <ol>
-                                {msg.sources.map((source, index) => (
-                                  <li key={index}>
-                                    <a href={source.link} target="_blank" rel="noopener noreferrer">
-                                      {source.title}
-                                      {source.date && ` (${source.date})`}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ol>
-                            )}
+                            {/* Get processed sources */}
+                            {(() => {
+                              const processed = processMarkdownWithCitations(msg.answer, msg.sources);
+                              const reorderedSources = processed?.reorderedSources || msg.sources;
+                              
+                              return (
+                                <>
+                                  {/* Cited Sources - Always visible */}
+                                  {reorderedSources.filter(s => s.isCited).length > 0 && (
+                                    <>
+                                      <h5>Cited Sources</h5>
+                                      <ol>
+                                        {reorderedSources
+                                          .filter(source => source.isCited)
+                                          .map((source, index) => (
+                                            <li key={index}>
+                                              <img 
+                                                src={getFaviconUrl(source.link)} 
+                                                alt=""
+                                                className="source-favicon"
+                                                onError={(e) => {
+                                                  e.target.style.display = 'none';
+                                                }}
+                                              />
+                                              <a href={source.link} target="_blank" rel="noopener noreferrer">
+                                                {source.title}
+                                                {source.date && ` (${source.date})`}
+                                              </a>
+                                            </li>
+                                          ))}
+                                      </ol>
+                                    </>
+                                  )}
+                                  
+                                  {/* Other Sources - Collapsible */}
+                                  {reorderedSources.filter(s => !s.isCited).length > 0 && (
+                                    <>
+                                      <div 
+                                        className="other-sources-header"
+                                        onClick={() => setExpandedSources(prev => ({
+                                          ...prev,
+                                          [msg.id]: !prev[msg.id]
+                                        }))}
+                                      >
+                                        
+                                        <h5>Other Sources ({reorderedSources.filter(s => !s.isCited).length})</h5>
+                                        <button 
+                                          className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
+                                        >
+                                          ▶
+                                        </button>
+                                      </div>
+                                      {expandedSources[msg.id] && (
+                                        <ol>
+                                          {reorderedSources
+                                            .filter(source => !source.isCited)
+                                            .map((source, index) => (
+                                              <li key={index}>
+                                                <img 
+                                                  src={getFaviconUrl(source.link)} 
+                                                  alt=""
+                                                  className="source-favicon"
+                                                  onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                  }}
+                                                />
+                                                <a href={source.link} target="_blank" rel="noopener noreferrer">
+                                                  {source.title}
+                                                  {source.date && ` (${source.date})`}
+                                                </a>
+                                              </li>
+                                            ))}
+                                        </ol>
+                                      )}
+                                    </>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         )}
                         <div className="markdown-content">
                           <ReactMarkdown components={markdownComponents}>
-                            {processMarkdownWithCitations(msg.answer, msg.sources)}
+                            {processMarkdownWithCitations(msg.answer, msg.sources)?.processedText || msg.answer}
                           </ReactMarkdown>
                         </div>
                         <small>{msg.timestamp}</small>
