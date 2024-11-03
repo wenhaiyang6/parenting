@@ -340,3 +340,36 @@ small {
   font-size: 0.9em;
   color: #666;
 }
+
+/* Add these new styles for citation links */
+.markdown-content a[href^="http"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: oklch(0.93 0.01 0);
+  color: oklch(50.2% 0.008 106.677 / 1);
+  text-decoration: none;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin: 0 2px;
+  vertical-align: text-top;
+}
+
+.markdown-content a[href^="http"]:hover {
+  background-color: oklch(0.93 0.01 0);
+  text-decoration: none;
+}
+
+/* Update existing markdown link styles to not affect citation links */
+.markdown-content a:not([href^="http"]) {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.markdown-content a:not([href^="http"]):hover {
+  text-decoration: underline;
+}

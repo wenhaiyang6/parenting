@@ -94,7 +94,7 @@ function App() {
 
     // Update links
     reorderedSources.forEach((source, index) => {
-      const citation = `[${index + 1}]`;
+      const citation = `${index + 1}`;
       const link = `[${citation}](${source.link})`;
       processedText = processedText.replace(new RegExp(`\\[${citation}\\]`, 'g'), link);
     });
@@ -332,7 +332,7 @@ function App() {
                                   {/* Cited Sources - Always visible */}
                                   {reorderedSources.filter(s => s.isCited).length > 0 && (
                                     <>
-                                      <h5>Cited Sources</h5>
+                                      <h5>Sources</h5>
                                       <ol>
                                         {reorderedSources
                                           .filter(source => source.isCited)
@@ -367,7 +367,7 @@ function App() {
                                         }))}
                                       >
                                         
-                                        <h5>Other Sources ({reorderedSources.filter(s => !s.isCited).length})</h5>
+                                        <h5>View {reorderedSources.filter(s => !s.isCited).length} more</h5>
                                         <button 
                                           className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
                                         >
