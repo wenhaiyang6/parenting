@@ -1,4 +1,4 @@
-# Parenting Q&A App
+# BabyWise App
 
 ## Development Setup
 

@@ -219,7 +219,7 @@ function App() {
   return (
     <div className="App">
       <aside className="sidebar">
-        <h1>Parenting Q&A</h1>
+        <h1>BabyWise</h1>
         <button 
           className="new-conversation-btn" 
           onClick={() => {
@@ -325,7 +325,7 @@ function App() {
                     handleSubmit(e);
                   }
                 }}
-                placeholder="Ask your parenting question here... (Press Enter to submit, Shift+Enter for new line)"
+                placeholder="Message BabyWise... (Press Enter to submit, Shift+Enter for new line)"
                 rows="3"
               />
             </form>
@@ -333,7 +333,7 @@ function App() {
         ) : (
           // Google-like centered layout
           <div className="empty-chat-container">
-            <h2>Ask a Parenting Question</h2>
+            <h2>What's on your mind?</h2>
             <form className="input-form" onSubmit={handleSubmit}>
               <textarea
                 ref={textareaRef}
@@ -345,7 +345,7 @@ function App() {
                     handleSubmit(e);
                   }
                 }}
-                placeholder="Type your question here..."
+                placeholder="Message BabyWise..."
                 rows="3"
               />
             </form>
