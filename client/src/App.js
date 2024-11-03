@@ -37,6 +37,20 @@ function App() {
     fetchConversations();
   }, []); // Now we can safely use empty dependency array
 
+  const processMarkdownWithCitations = (text, sources) => {
+    if (!text || !sources) return text;
+    
+    // Replace citation numbers with links
+    let processedText = text;
+    sources.forEach((source, index) => {
+      const citation = `[${index + 1}]`;
+      const link = `[${citation}](${source.link})`;
+      processedText = processedText.replace(citation, link);
+    });
+    
+    return processedText;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (question.trim()) {
@@ -103,6 +117,7 @@ function App() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let answer = '';
+        let sources = [];
 
         while (true) {
           const { value, done } = await reader.read();
@@ -120,22 +135,29 @@ function App() {
                 const parsed = JSON.parse(data);
                 const currentAnswer = answer + parsed.content;
                 answer = currentAnswer;
-                
+                sources = parsed.sources || sources;
+
                 // Update the answer in real-time
-                setConversations(prev => 
-                  prev.map(conv => 
+                setConversations(prev => {
+                  // Create a local copy of sources to avoid closure issues
+                  const currentSources = [...sources];
+                  return prev.map(conv => 
                     conv.id === currentConversationId 
                       ? {
                           ...conv,
                           messages: conv.messages.map(msg =>
                             msg.id === newMessage.id
-                              ? { ...msg, answer: currentAnswer }
+                              ? { 
+                                  ...msg, 
+                                  answer: currentAnswer,
+                                  sources: currentSources // Use the local copy
+                                }
                               : msg
                           )
                         }
                       : conv
-                  )
-                );
+                  );
+                });
               } catch (e) {
                 console.error('Error parsing JSON:', e);
               }
@@ -155,6 +177,11 @@ function App() {
   const handleDeleteConversation = async (convId, e) => {
     e.stopPropagation(); // Prevent conversation selection when clicking delete
     
+    // Prompt for confirmation
+    if (!window.confirm('Are you sure you want to delete this conversation?')) {
+      return;
+    }
+    
     try {
       const userId = await generateUserId();
       const response = await fetch(getApiUrl(`/api/ask/conversations/${convId}`), {
@@ -165,18 +192,16 @@ function App() {
       });
 
       if (response.ok) {
-        // Remove conversation from state
         setConversations(prev => prev.filter(conv => conv.id !== convId));
-        
-        // If the deleted conversation was active, clear the active conversation
         if (activeConversationId === convId) {
           setActiveConversationId(null);
         }
       } else {
-        console.error('Failed to delete conversation');
+        alert('Failed to delete conversation. Please try again.');
       }
     } catch (error) {
       console.error('Error deleting conversation:', error);
+      alert('An error occurred while deleting the conversation.');
     }
   };
 
@@ -236,8 +261,25 @@ function App() {
                   {msg.answer && (
                     <div className="assistant-message">
                       <div className="markdown-content">
-                        <ReactMarkdown>{msg.answer}</ReactMarkdown>
+                        <ReactMarkdown>
+                          {processMarkdownWithCitations(msg.answer, msg.sources)}
+                        </ReactMarkdown>
                       </div>
+                      {msg.sources && msg.sources.length > 0 && (
+                        <div className="sources-section">
+                          <h4>Sources:</h4>
+                          <ul>
+                            {msg.sources.map((source, index) => (
+                              <li key={index}>
+                                <a href={source.link} target="_blank" rel="noopener noreferrer">
+                                  {source.title}
+                                  {source.date && ` (${source.date})`}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       <small>{msg.timestamp}</small>
                     </div>
                   )}
