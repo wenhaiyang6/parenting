@@ -29,12 +29,12 @@ function App() {
         setConversations(data);
         
         // Move this check inside a separate setActiveConversation call
-        setActiveConversationId(prevId => {
-          if (data.length > 0 && !prevId) {
-            return data[0].id;
-          }
-          return prevId;
-        });
+        // setActiveConversationId(prevId => {
+        //   if (data.length > 0 && !prevId) {
+        //     return data[0].id;
+        //   }
+        //   return prevId;
+        // });
       } catch (error) {
         console.error('Error fetching conversations:', error);
       }
@@ -321,7 +321,6 @@ function App() {
                   <div key={msg.id} className="message-wrapper">
                     <div className="user-message">
                       <p>{msg.text}</p>
-                      <small>{msg.timestamp}</small>
                     </div>
                     {msg.answer && (
                       <div className="assistant-message">
@@ -420,7 +419,7 @@ function App() {
                 ))}
             </div>
 
-            <form className="input-form" onSubmit={handleSubmit}>
+            <form className={`input-form ${activeConversationId ? 'in-chat' : ''}`} onSubmit={handleSubmit}>
               <textarea
                 ref={textareaRef}
                 value={question}
