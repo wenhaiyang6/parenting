@@ -1,13 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './App.css';
 import { getApiUrl } from './config/api';
+import { generateUserId } from './utils/deviceId';
 
 function App() {
   const [question, setQuestion] = useState('');
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState(null);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const userId = await generateUserId();
+        const response = await fetch(getApiUrl('/api/ask/conversations'), {
+          headers: {
+            'X-User-ID': userId
+          }
+        });
+        const data = await response.json();
+        setConversations(data);
+        
+        // Move this check inside a separate setActiveConversation call
+        setActiveConversationId(prevId => {
+          if (data.length > 0 && !prevId) {
+            return data[0].id;
+          }
+          return prevId;
+        });
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      }
+    };
+
+    fetchConversations();
+  }, []); // Now we can safely use empty dependency array
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +51,7 @@ function App() {
       };
 
       let currentConversationId;
+      let updatedConversations;
 
       // If no active conversation, create new one
       if (!activeConversationId) {
@@ -30,44 +59,45 @@ function App() {
           id: Date.now(),
           messages: [newMessage]
         };
-        setConversations(prev => [...prev, newConversation]);
+        updatedConversations = [...conversations, newConversation];
+        setConversations(updatedConversations);
         setActiveConversationId(newConversation.id);
         currentConversationId = newConversation.id;
       } else {
         // Add to existing conversation
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === activeConversationId 
-              ? { ...conv, messages: [...conv.messages, newMessage] }
-              : conv
-          )
+        updatedConversations = conversations.map(conv => 
+          conv.id === activeConversationId 
+            ? { ...conv, messages: [...conv.messages, newMessage] }
+            : conv
         );
+        setConversations(updatedConversations);
         currentConversationId = activeConversationId;
       }
 
       setQuestion('');
 
       try {
-        // Get current conversation history
-        const currentConversation = conversations.find(c => c.id === currentConversationId);
+        // Get current conversation history from updated conversations
+        const currentConversation = updatedConversations.find(c => c.id === currentConversationId);
         const conversationHistory = currentConversation?.messages || [];
+
+        const userId = await generateUserId();
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId
+        };
 
         const response = await fetch(getApiUrl('/api/ask/stream'), {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: (() => {
-            const payload = { 
-              question,
-              conversationHistory: conversationHistory.map(m => ({
-                question: m.text,
-                answer: m.answer
-              }))
-            };
-            console.log('Request payload:', payload);
-            return JSON.stringify(payload);
-          })(),
+          headers: headers,
+          body: JSON.stringify({ 
+            question,
+            conversationId: currentConversationId,
+            conversationHistory: conversationHistory.map(m => ({
+              question: m.text,
+              answer: m.answer
+            }))
+          })
         });
 
         const reader = response.body.getReader();
@@ -131,7 +161,13 @@ function App() {
       <div className="main-container">
         {/* Left Sidebar */}
         <aside className="sidebar">
-          <button className="new-conversation-btn" onClick={() => setActiveConversationId(null)}>
+          <button 
+            className="new-conversation-btn" 
+            onClick={() => {
+              setActiveConversationId(null);
+              setQuestion('');
+            }}
+          >
             New Conversation
           </button>
           
@@ -152,7 +188,7 @@ function App() {
         {/* Main Chat Area */}
         <main className="chat-area">
           <div className="messages-container">
-            {activeConversationId && conversations
+            {conversations
               .find(conv => conv.id === activeConversationId)
               ?.messages.map(msg => (
                 <div key={msg.id} className="message-wrapper">
