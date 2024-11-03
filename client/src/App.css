@@ -60,11 +60,39 @@ button:hover {
 }
 
 .conversation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-bottom: 10px;
   cursor: pointer;
+}
+
+.conversation-content {
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.delete-conversation-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 20px;
+  padding: 0 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 12px;
+}
+
+.delete-conversation-btn:hover {
+  background-color: #ff4444;
+  color: white;
 }
 
 .conversation-item:hover {

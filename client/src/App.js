@@ -152,6 +152,34 @@ function App() {
     }
   };
 
+  const handleDeleteConversation = async (convId, e) => {
+    e.stopPropagation(); // Prevent conversation selection when clicking delete
+    
+    try {
+      const userId = await generateUserId();
+      const response = await fetch(getApiUrl(`/api/ask/conversations/${convId}`), {
+        method: 'DELETE',
+        headers: {
+          'X-User-ID': userId
+        }
+      });
+
+      if (response.ok) {
+        // Remove conversation from state
+        setConversations(prev => prev.filter(conv => conv.id !== convId));
+        
+        // If the deleted conversation was active, clear the active conversation
+        if (activeConversationId === convId) {
+          setActiveConversationId(null);
+        }
+      } else {
+        console.error('Failed to delete conversation');
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+    }
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -176,10 +204,19 @@ function App() {
               <div 
                 key={conv.id} 
                 className={`conversation-item ${conv.id === activeConversationId ? 'active' : ''}`}
-                onClick={() => setActiveConversationId(conv.id)}
               >
-                {/* Show first message as conversation title */}
-                {conv.messages[0]?.text.substring(0, 30)}...
+                <div 
+                  className="conversation-content"
+                  onClick={() => setActiveConversationId(conv.id)}
+                >
+                  {conv.messages[0]?.text.substring(0, 30)}...
+                </div>
+                <button
+                  className="delete-conversation-btn"
+                  onClick={(e) => handleDeleteConversation(conv.id, e)}
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>

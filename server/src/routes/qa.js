@@ -89,10 +89,7 @@ router.post('/stream', async (req, res) => {
       });
     }
 
-    // Add current question
-    messages.push({ role: "user", content: question });
     console.log('Messages before sending:', messages);
-
     const stream = await openai.chat.completions.create({
       messages,
       model: "gpt-3.5-turbo",
@@ -119,6 +116,30 @@ router.post('/stream', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Failed to get answer' });
+  }
+});
+
+// Add this new route
+router.delete('/conversations/:id', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const conversation = await Conversation.findOne({ 
+      id: req.params.id,
+      userId: userId 
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    await Conversation.deleteOne({ id: req.params.id });
+    res.json({ message: 'Conversation deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete conversation' });
   }
 });
 
