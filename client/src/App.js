@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './App.css';
 import { getApiUrl } from './config/api';
@@ -7,7 +7,6 @@ import { generateUserId } from './utils/deviceId';
 function App() {
   const [question, setQuestion] = useState('');
   const [conversations, setConversations] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [expandedSources, setExpandedSources] = useState({});
 
@@ -44,6 +43,14 @@ function App() {
     fetchConversations();
   }, []); // Now we can safely use empty dependency array
 
+  useEffect(() => {
+    // Scroll to bottom whenever conversations change
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  }, [conversations]);
+
   const processMarkdownWithCitations = (text, sources) => {
     if (!text || !sources) return text;
     
@@ -61,7 +68,6 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (question.trim()) {
-      setLoading(true);
       
       // Create new message
       const newMessage = {
@@ -174,9 +180,6 @@ function App() {
 
       } catch (error) {
         console.error('Error:', error);
-        setLoading(false);
-      } finally {
-        setLoading(false);
       }
     }
   };
@@ -212,6 +215,9 @@ function App() {
     }
   };
 
+  // Add a ref for the textarea
+  const textareaRef = useRef(null);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -226,9 +232,10 @@ function App() {
             onClick={() => {
               setActiveConversationId(null);
               setQuestion('');
+              textareaRef.current?.focus();
             }}
           >
-            New Conversation
+            +
           </button>
           
           <div className="conversations-list">
@@ -239,7 +246,10 @@ function App() {
               >
                 <div 
                   className="conversation-content"
-                  onClick={() => setActiveConversationId(conv.id)}
+                  onClick={() => {
+                    setActiveConversationId(conv.id);
+                    setQuestion('');
+                  }}
                 >
                   {conv.messages[0]?.text.substring(0, 30)}...
                 </div>
@@ -311,20 +321,18 @@ function App() {
 
           <form className="input-form" onSubmit={handleSubmit}>
             <textarea
+              ref={textareaRef}
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit(e);
                 }
               }}
-              placeholder="Ask your parenting question here..."
+              placeholder="Ask your parenting question here... (Press Enter to submit, Shift+Enter for new line)"
               rows="3"
             />
-            <button type="submit" disabled={loading}>
-              {loading ? 'Getting Answer...' : 'Ask Question'}
-            </button>
           </form>
         </main>
       </div>
