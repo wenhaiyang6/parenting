@@ -18,8 +18,24 @@
 
 .sidebar h1 {
   font-size: 24px;
-  margin: 0 0 30px 0;
+  margin: 0 0 20px 0;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo svg {
+  width: 100%;
+  height: 100%;
 }
 
 .main-container {
@@ -81,7 +97,7 @@ textarea:focus {
 .conversations-list {
   flex: 1;
   overflow-y: auto;
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .conversation-item {
@@ -334,8 +350,7 @@ small {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin: 0 0 20px 0;
 }
 
 .new-conversation-btn:hover {

@@ -123,7 +123,7 @@ function App() {
           id: Date.now(),
           messages: [newMessage]
         };
-        updatedConversations = [...conversations, newConversation];
+        updatedConversations = [newConversation, ...conversations];
         setConversations(updatedConversations);
         setActiveConversationId(newConversation.id);
         currentConversationId = newConversation.id;
@@ -267,7 +267,34 @@ function App() {
   return (
     <div className="App">
       <aside className="sidebar">
-        <h1>BabyWise</h1>
+        <h1>
+          <span className="logo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path 
+                d="M12 2L2 7L12 12L22 7L12 2Z" 
+                stroke="#333" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+              <path 
+                d="M2 17L12 22L22 17" 
+                stroke="#333" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+              <path 
+                d="M2 12L12 17L22 12" 
+                stroke="#333" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          BabyWise
+        </h1>
         <button 
           className="new-conversation-btn" 
           onClick={() => {
@@ -280,7 +307,7 @@ function App() {
         >
           +
         </button>
-        
+
         <div className="conversations-list">
           {conversations.map(conv => (
             <div 
@@ -297,7 +324,7 @@ function App() {
                   }, 0);
                 }}
               >
-                {conv.messages[0]?.text.substring(0, 30)}...
+                {conv.messages[0]?.text.substring(0, 26)}...
               </div>
               <button
                 className="delete-conversation-btn"
