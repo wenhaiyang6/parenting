@@ -9,6 +9,13 @@ function App() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState(null);
+  const [expandedSources, setExpandedSources] = useState({});
+
+  const markdownComponents = {
+    a: ({node, ...props}) => (
+      <a target="_blank" rel="noopener noreferrer" {...props} />
+    )
+  };
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -260,26 +267,41 @@ function App() {
                   </div>
                   {msg.answer && (
                     <div className="assistant-message">
+                      {msg.sources && msg.sources.length > 0 && (
+                        <div className="sources-section">
+                          <div 
+                            className="sources-header"
+                            onClick={() => setExpandedSources(prev => ({
+                              ...prev,
+                              [msg.id]: !prev[msg.id]
+                            }))}
+                          >
+                            <button 
+                              className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
+                            >
+                              ▶
+                            </button>
+                            <h4>Sources ({msg.sources.length})</h4>
+                          </div>
+                          {expandedSources[msg.id] && (
+                            <ul>
+                              {msg.sources.map((source, index) => (
+                                <li key={index}>
+                                  <a href={source.link} target="_blank" rel="noopener noreferrer">
+                                    {source.title}
+                                    {source.date && ` (${source.date})`}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
                       <div className="markdown-content">
-                        <ReactMarkdown>
+                        <ReactMarkdown components={markdownComponents}>
                           {processMarkdownWithCitations(msg.answer, msg.sources)}
                         </ReactMarkdown>
                       </div>
-                      {msg.sources && msg.sources.length > 0 && (
-                        <div className="sources-section">
-                          <h4>Sources:</h4>
-                          <ul>
-                            {msg.sources.map((source, index) => (
-                              <li key={index}>
-                                <a href={source.link} target="_blank" rel="noopener noreferrer">
-                                  {source.title}
-                                  {source.date && ` (${source.date})`}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                       <small>{msg.timestamp}</small>
                     </div>
                   )}
