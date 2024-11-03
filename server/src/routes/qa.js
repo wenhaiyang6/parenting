@@ -69,7 +69,7 @@ router.post('/stream', async (req, res) => {
 
     if (!conversation) {
       conversation = new Conversation({
-        id: Date.now().toString(),
+        id: conversationId || Date.now().toString(),
         userId,
         messages: [newMessage]
       });

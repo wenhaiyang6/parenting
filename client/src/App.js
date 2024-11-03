@@ -44,12 +44,11 @@ function App() {
   }, []); // Now we can safely use empty dependency array
 
   useEffect(() => {
-    // Scroll to bottom whenever conversations change
     const messagesContainer = document.querySelector('.messages-container');
     if (messagesContainer) {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-  }, [conversations]);
+  }, [conversations, activeConversationId]); // Trigger on either change
 
   const processMarkdownWithCitations = (text, sources) => {
     if (!text || !sources) return text;
@@ -59,9 +58,8 @@ function App() {
     sources.forEach((source, index) => {
       const citation = `[${index + 1}]`;
       const link = `[${citation}](${source.link})`;
-      processedText = processedText.replace(citation, link);
+      processedText = processedText.replace(new RegExp(`\\[${citation}\\]`, 'g'), link);
     });
-    
     return processedText;
   };
 
@@ -220,122 +218,143 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
+      <aside className="sidebar">
         <h1>Parenting Q&A</h1>
-      </header>
-      
-      <div className="main-container">
-        {/* Left Sidebar */}
-        <aside className="sidebar">
-          <button 
-            className="new-conversation-btn" 
-            onClick={() => {
-              setActiveConversationId(null);
-              setQuestion('');
-              textareaRef.current?.focus();
-            }}
-          >
-            +
-          </button>
-          
-          <div className="conversations-list">
-            {conversations.slice().reverse().map(conv => (
+        <button 
+          className="new-conversation-btn" 
+          onClick={() => {
+            setActiveConversationId(null);
+            setQuestion('');
+            textareaRef.current?.focus();
+          }}
+        >
+          +
+        </button>
+        
+        <div className="conversations-list">
+          {conversations.slice().reverse().map(conv => (
+            <div 
+              key={conv.id} 
+              className={`conversation-item ${conv.id === activeConversationId ? 'active' : ''}`}
+            >
               <div 
-                key={conv.id} 
-                className={`conversation-item ${conv.id === activeConversationId ? 'active' : ''}`}
+                className="conversation-content"
+                onClick={() => {
+                  setActiveConversationId(conv.id);
+                  setQuestion('');
+                }}
               >
-                <div 
-                  className="conversation-content"
-                  onClick={() => {
-                    setActiveConversationId(conv.id);
-                    setQuestion('');
-                  }}
-                >
-                  {conv.messages[0]?.text.substring(0, 30)}...
-                </div>
-                <button
-                  className="delete-conversation-btn"
-                  onClick={(e) => handleDeleteConversation(conv.id, e)}
-                >
-                  ×
-                </button>
+                {conv.messages[0]?.text.substring(0, 30)}...
               </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Main Chat Area */}
-        <main className="chat-area">
-          <div className="messages-container">
-            {conversations
-              .find(conv => conv.id === activeConversationId)
-              ?.messages.map(msg => (
-                <div key={msg.id} className="message-wrapper">
-                  <div className="user-message">
-                    <p>{msg.text}</p>
-                    <small>{msg.timestamp}</small>
-                  </div>
-                  {msg.answer && (
-                    <div className="assistant-message">
-                      {msg.sources && msg.sources.length > 0 && (
-                        <div className="sources-section">
-                          <div 
-                            className="sources-header"
-                            onClick={() => setExpandedSources(prev => ({
-                              ...prev,
-                              [msg.id]: !prev[msg.id]
-                            }))}
-                          >
-                            <button 
-                              className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
-                            >
-                              ▶
-                            </button>
-                            <h4>Sources ({msg.sources.length})</h4>
-                          </div>
-                          {expandedSources[msg.id] && (
-                            <ul>
-                              {msg.sources.map((source, index) => (
-                                <li key={index}>
-                                  <a href={source.link} target="_blank" rel="noopener noreferrer">
-                                    {source.title}
-                                    {source.date && ` (${source.date})`}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      )}
-                      <div className="markdown-content">
-                        <ReactMarkdown components={markdownComponents}>
-                          {processMarkdownWithCitations(msg.answer, msg.sources)}
-                        </ReactMarkdown>
-                      </div>
+              <button
+                className="delete-conversation-btn"
+                onClick={(e) => handleDeleteConversation(conv.id, e)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </aside>
+      
+      <main className="chat-area">
+        {activeConversationId ? (
+          // Regular chat interface
+          <>
+            <div className="messages-container">
+              {conversations
+                .find(conv => conv.id === activeConversationId)
+                ?.messages.map(msg => (
+                  <div key={msg.id} className="message-wrapper">
+                    <div className="user-message">
+                      <p>{msg.text}</p>
                       <small>{msg.timestamp}</small>
                     </div>
-                  )}
-                </div>
-              ))}
-          </div>
+                    {msg.answer && (
+                      <div className="assistant-message">
+                        {msg.sources && msg.sources.length > 0 && (
+                          <div className="sources-section">
+                            <div 
+                              className="sources-header"
+                              onClick={() => setExpandedSources(prev => ({
+                                ...prev,
+                                [msg.id]: !prev[msg.id]
+                              }))}
+                            >
+                              <button 
+                                className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
+                              >
+                                ▶
+                              </button>
+                              <h4>Sources ({msg.sources.length})</h4>
+                            </div>
+                            {expandedSources[msg.id] && (
+                              <ol>
+                                {msg.sources.map((source, index) => (
+                                  <li key={index}>
+                                    <a href={source.link} target="_blank" rel="noopener noreferrer">
+                                      {source.title}
+                                      {source.date && ` (${source.date})`}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ol>
+                            )}
+                          </div>
+                        )}
+                        <div className="markdown-content">
+                          <ReactMarkdown components={markdownComponents}>
+                            {processMarkdownWithCitations(msg.answer, msg.sources)}
+                          </ReactMarkdown>
+                        </div>
+                        <small>{msg.timestamp}</small>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
 
-          <form className="input-form" onSubmit={handleSubmit}>
-            <textarea
-              ref={textareaRef}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              placeholder="Ask your parenting question here... (Press Enter to submit, Shift+Enter for new line)"
-              rows="3"
-            />
-          </form>
-        </main>
-      </div>
+            <form className="input-form" onSubmit={handleSubmit}>
+              <textarea
+                ref={textareaRef}
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+                placeholder="Ask your parenting question here... (Press Enter to submit, Shift+Enter for new line)"
+                rows="3"
+              />
+            </form>
+          </>
+        ) : (
+          // Google-like centered layout
+          <div className="empty-chat-container">
+            <h2>Ask a Parenting Question</h2>
+            <form className="input-form" onSubmit={handleSubmit}>
+              <textarea
+                ref={textareaRef}
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+                placeholder="Type your question here..."
+                rows="3"
+              />
+            </form>
+            <div className="empty-chat-hint">
+              Press Enter to submit, Shift+Enter for new line
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

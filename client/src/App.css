@@ -1,24 +1,30 @@
 .App {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.App-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-/* Main layout */
-.main-container {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
   display: flex;
-  gap: 20px;
-  height: calc(100vh - 100px);
 }
 
 .sidebar {
-  width: 250px;
+  width: 280px;
   flex-shrink: 0;
+  background-color: rgb(247, 247, 247);
+  padding: 20px;
+  height: 100vh;
+  border-right: 1px solid #e5e5e5;
+}
+
+.sidebar h1 {
+  font-size: 24px;
+  margin: 0 0 30px 0;
+  color: #333;
+}
+
+.main-container {
+  display: flex;
+  flex: 1;
+  height: 100vh;
 }
 
 .chat-area {
@@ -27,6 +33,7 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  padding: 20px;
 }
 
 .messages-container {
@@ -240,9 +247,10 @@ small {
   transform: rotate(90deg);
 }
 
-.sources-section ul {
+.sources-section ol {
   margin: 0;
   padding-left: 1.5rem;
+  list-style-type: decimal;
 }
 
 .sources-section li {
@@ -284,4 +292,32 @@ small {
 .new-conversation-btn:hover {
   background-color: #f8f9fa;
   color: #333;
+}
+
+/* Add these new styles */
+.empty-chat-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+}
+
+.empty-chat-container textarea {
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.empty-chat-container form {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Optional: add some helper text */
+.empty-chat-hint {
+  color: #666;
+  text-align: center;
+  margin-top: 10px;
+  font-size: 0.9em;
 }
