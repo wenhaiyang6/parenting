@@ -273,14 +273,16 @@ function App() {
           onClick={() => {
             setActiveConversationId(null);
             setQuestion('');
-            textareaRef.current?.focus();
+            setTimeout(() => {
+              textareaRef.current?.focus();
+            }, 0);
           }}
         >
           +
         </button>
         
         <div className="conversations-list">
-          {conversations.slice().reverse().map(conv => (
+          {conversations.map(conv => (
             <div 
               key={conv.id} 
               className={`conversation-item ${conv.id === activeConversationId ? 'active' : ''}`}
@@ -290,6 +292,9 @@ function App() {
                 onClick={() => {
                   setActiveConversationId(conv.id);
                   setQuestion('');
+                  setTimeout(() => {
+                    textareaRef.current?.focus();
+                  }, 0);
                 }}
               >
                 {conv.messages[0]?.text.substring(0, 30)}...

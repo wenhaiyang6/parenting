@@ -269,7 +269,7 @@ small {
 }
 
 .sources-section a {
-  color: #0066cc;
+  color: oklch(var(--text-color-100)/var(--tw-text-opacity));
   text-decoration: none;
 }
 
