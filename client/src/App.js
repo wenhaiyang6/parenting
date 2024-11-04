@@ -103,14 +103,17 @@ function App() {
     return { processedText, reorderedSources };
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (question.trim()) {
-      
+  // New shared function for sending messages
+  const sendMessage = async (questionText, e) => {
+    if (e?.preventDefault) {
+      e.preventDefault();
+    }
+
+    if (questionText.trim()) {
       // Create new message
       const newMessage = {
         id: Date.now(),
-        text: question,
+        text: questionText,
         answer: '',
         timestamp: new Date().toLocaleString()
       };
@@ -157,7 +160,7 @@ function App() {
           method: 'POST',
           headers: headers,
           body: JSON.stringify({ 
-            question,
+            question: questionText,
             conversationId: currentConversationId,
             conversationHistory: conversationHistory.map(m => ({
               question: m.text,
@@ -186,7 +189,6 @@ function App() {
               try {
                 const parsed = JSON.parse(data);
                 
-                // Handle different message types
                 if (parsed.type === 'searching') {
                   setSearchStatus(parsed.searchQuery);
                 } else if (parsed.type === 'content') {
@@ -194,9 +196,7 @@ function App() {
                   answer = currentAnswer;
                   sources = parsed.sources || sources;
 
-                  // Update the answer in real-time
                   setConversations(prev => {
-                    // Create a local copy of sources to avoid closure issues
                     const currentSources = [...sources];
                     return prev.map(conv => 
                       conv.id === currentConversationId 
@@ -207,7 +207,25 @@ function App() {
                                 ? { 
                                     ...msg, 
                                     answer: currentAnswer,
-                                    sources: currentSources // Use the local copy
+                                    sources: currentSources
+                                  }
+                                : msg
+                            )
+                          }
+                        : conv
+                    );
+                  });
+                } else if (parsed.type === 'followUp') {
+                  setConversations(prev => {
+                    return prev.map(conv => 
+                      conv.id === currentConversationId 
+                        ? {
+                            ...conv,
+                            messages: conv.messages.map(msg =>
+                              msg.id === newMessage.id
+                                ? { 
+                                    ...msg,
+                                    followUpQuestions: parsed.questions
                                   }
                                 : msg
                             )
@@ -222,11 +240,15 @@ function App() {
             }
           }
         }
-
       } catch (error) {
         console.error('Error:', error);
       }
     }
+  };
+
+  // Simplified handleSubmit
+  const handleSubmit = (e) => {
+    sendMessage(question, e);
   };
 
   const handleDeleteConversation = async (convId, e) => {
@@ -270,6 +292,11 @@ function App() {
     } catch (e) {
       return null;
     }
+  };
+
+  // Simplified handleFollowUpClick
+  const handleFollowUpClick = (questionText) => {
+    sendMessage(questionText);
   };
 
   return (
@@ -451,6 +478,23 @@ function App() {
                         <ReactMarkdown components={markdownComponents}>
                           {processMarkdownWithCitations(msg.answer, msg.sources)?.processedText || msg.answer}
                         </ReactMarkdown>
+                        
+                        {msg.followUpQuestions && msg.followUpQuestions.length > 0 && (
+                          <div className="follow-up-questions">
+                            <h5>Related</h5>
+                            <div className="follow-up-buttons">
+                              {msg.followUpQuestions.map((q, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleFollowUpClick(q)}
+                                  className="follow-up-button"
+                                >
+                                  {q}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <small>{msg.timestamp}</small>
                     </div>

@@ -11,7 +11,8 @@ const messageSchema = new mongoose.Schema({
   text: String,
   answer: String,
   timestamp: String,
-  sources: [sourceSchema]
+  sources: [sourceSchema],
+  followUpQuestions: [String]
 });
 
 const conversationSchema = new mongoose.Schema({

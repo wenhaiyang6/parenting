@@ -206,19 +206,41 @@ router.post('/stream', async (req, res) => {
       }
     }
 
+    // Generate follow-up questions after the main answer
+    const followUpResponse = await openai.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "Generate 3 natural follow-up questions based on the previous conversation. Make them concise and directly related to the topic. Return only the questions, one per line, no need to start with number bullets."
+        },
+        {
+          role: "user",
+          content: `Previous question: ${question}\nPrevious answer: ${fullAnswer}`
+        }
+      ],
+      model: "gpt-3.5-turbo",
+    });
+
+    const followUpQuestions = followUpResponse.choices[0].message.content.split('\n').filter(q => q.trim());
+
+    // Send follow-up questions to client
+    res.write(`data: ${JSON.stringify({ 
+      type: 'followUp',
+      questions: followUpQuestions
+    })}\n\n`);
+
     res.write('data: [DONE]\n\n');
     res.end();
-    console.log('Full answer:', fullAnswer);
 
-    // Update the message with the complete answer and sources
+    // Update the message with the complete answer, sources, and follow-up questions
     conversation.messages[conversation.messages.length - 1].answer = fullAnswer;
     conversation.messages[conversation.messages.length - 1].sources = searchInfo.map(item => ({
       title: item.title,
       link: item.link,
       date: item.date ? new Date(item.date).toLocaleDateString() : null
     }));
+    conversation.messages[conversation.messages.length - 1].followUpQuestions = followUpQuestions;
 
-    // Save the conversation after streaming is complete
     await conversation.save();
   } catch (error) {
     console.error('Error:', error);
