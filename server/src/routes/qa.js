@@ -102,6 +102,12 @@ router.post('/stream', async (req, res) => {
     const searchKeywords = keywordResponse.choices[0].message.content;
     console.log('Search keywords:', searchKeywords);
 
+    // After generating keywords, send them to client
+    res.write(`data: ${JSON.stringify({ 
+      type: 'searching',
+      searchQuery: searchKeywords 
+    })}\n\n`);
+
     // Perform both searches in parallel
     const [keywordResults, directResults] = await Promise.all([
       customsearch.cse.list({
@@ -189,6 +195,7 @@ router.post('/stream', async (req, res) => {
       if (content) {
         fullAnswer += content;
         res.write(`data: ${JSON.stringify({ 
+          type: 'content',
           content,
           sources: searchInfo.map(item => ({
             title: item.title,

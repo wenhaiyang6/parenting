@@ -9,6 +9,7 @@ function App() {
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [expandedSources, setExpandedSources] = useState({});
+  const [searchStatus, setSearchStatus] = useState(null);
 
   const markdownComponents = {
     a: ({node, ...props}) => (
@@ -139,6 +140,7 @@ function App() {
       }
 
       setQuestion('');
+      setSearchStatus(null);
 
       try {
         // Get current conversation history from updated conversations
@@ -183,31 +185,37 @@ function App() {
               
               try {
                 const parsed = JSON.parse(data);
-                const currentAnswer = answer + parsed.content;
-                answer = currentAnswer;
-                sources = parsed.sources || sources;
+                
+                // Handle different message types
+                if (parsed.type === 'searching') {
+                  setSearchStatus(parsed.searchQuery);
+                } else if (parsed.type === 'content') {
+                  const currentAnswer = answer + parsed.content;
+                  answer = currentAnswer;
+                  sources = parsed.sources || sources;
 
-                // Update the answer in real-time
-                setConversations(prev => {
-                  // Create a local copy of sources to avoid closure issues
-                  const currentSources = [...sources];
-                  return prev.map(conv => 
-                    conv.id === currentConversationId 
-                      ? {
-                          ...conv,
-                          messages: conv.messages.map(msg =>
-                            msg.id === newMessage.id
-                              ? { 
-                                  ...msg, 
-                                  answer: currentAnswer,
-                                  sources: currentSources // Use the local copy
-                                }
-                              : msg
-                          )
-                        }
-                      : conv
-                  );
-                });
+                  // Update the answer in real-time
+                  setConversations(prev => {
+                    // Create a local copy of sources to avoid closure issues
+                    const currentSources = [...sources];
+                    return prev.map(conv => 
+                      conv.id === currentConversationId 
+                        ? {
+                            ...conv,
+                            messages: conv.messages.map(msg =>
+                              msg.id === newMessage.id
+                                ? { 
+                                    ...msg, 
+                                    answer: currentAnswer,
+                                    sources: currentSources // Use the local copy
+                                  }
+                                : msg
+                            )
+                          }
+                        : conv
+                    );
+                  });
+                }
               } catch (e) {
                 console.error('Error parsing JSON:', e);
               }
@@ -349,24 +357,71 @@ function App() {
                     <div className="user-message">
                       <p>{msg.text}</p>
                     </div>
-                    {msg.answer && (
-                      <div className="assistant-message">
-                        {msg.sources && msg.sources.length > 0 && (
-                          <div className="sources-section">
-                            {/* Get processed sources */}
-                            {(() => {
-                              const processed = processMarkdownWithCitations(msg.answer, msg.sources);
-                              const reorderedSources = processed?.reorderedSources || msg.sources;
-                              
-                              return (
-                                <>
-                                  {/* Cited Sources - Always visible */}
-                                  {reorderedSources.filter(s => s.isCited).length > 0 && (
-                                    <>
-                                      <h5>Sources</h5>
+                    <div className="assistant-message">
+                      {!msg.answer && <h5 className="search-query">
+                        {searchStatus 
+                          ? (msg.answer ? `Searched: "${searchStatus}"` : `Searching: "${searchStatus}"`)
+                          : (!msg.answer && "...")}
+                      </h5>}
+
+                      {msg.sources && msg.sources.length > 0 && (
+                        <div className="sources-section">
+                          {/* Get processed sources */}
+                          {(() => {
+                            const processed = processMarkdownWithCitations(msg.answer, msg.sources);
+                            const reorderedSources = processed?.reorderedSources || msg.sources;
+                            
+                            return (
+                              <>
+                                {/* Cited Sources - Always visible */}
+                                {reorderedSources.filter(s => s.isCited).length > 0 && (
+                                  <>
+                                    <h5>Sources</h5>
+                                    <ol>
+                                      {reorderedSources
+                                        .filter(source => source.isCited)
+                                        .map((source, index) => (
+                                          <li key={index}>
+                                            <img 
+                                              src={getFaviconUrl(source.link)} 
+                                              alt=""
+                                              className="source-favicon"
+                                              onError={(e) => {
+                                                e.target.style.display = 'none';
+                                              }}
+                                            />
+                                            <a href={source.link} target="_blank" rel="noopener noreferrer">
+                                              {source.title}
+                                              {source.date && ` (${source.date})`}
+                                            </a>
+                                          </li>
+                                        ))}
+                                    </ol>
+                                  </>
+                                )}
+                                
+                                {/* Other Sources - Collapsible */}
+                                {reorderedSources.filter(s => !s.isCited).length > 0 && (
+                                  <>
+                                    <div 
+                                      className="other-sources-header"
+                                      onClick={() => setExpandedSources(prev => ({
+                                        ...prev,
+                                        [msg.id]: !prev[msg.id]
+                                      }))}
+                                    >
+                                      
+                                      <h5>View {reorderedSources.filter(s => !s.isCited).length} more</h5>
+                                      <button 
+                                        className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
+                                      >
+                                        ▶
+                                      </button>
+                                    </div>
+                                    {expandedSources[msg.id] && (
                                       <ol>
                                         {reorderedSources
-                                          .filter(source => source.isCited)
+                                          .filter(source => !source.isCited)
                                           .map((source, index) => (
                                             <li key={index}>
                                               <img 
@@ -384,64 +439,21 @@ function App() {
                                             </li>
                                           ))}
                                       </ol>
-                                    </>
-                                  )}
-                                  
-                                  {/* Other Sources - Collapsible */}
-                                  {reorderedSources.filter(s => !s.isCited).length > 0 && (
-                                    <>
-                                      <div 
-                                        className="other-sources-header"
-                                        onClick={() => setExpandedSources(prev => ({
-                                          ...prev,
-                                          [msg.id]: !prev[msg.id]
-                                        }))}
-                                      >
-                                        
-                                        <h5>View {reorderedSources.filter(s => !s.isCited).length} more</h5>
-                                        <button 
-                                          className={`sources-toggle ${expandedSources[msg.id] ? 'expanded' : ''}`}
-                                        >
-                                          ▶
-                                        </button>
-                                      </div>
-                                      {expandedSources[msg.id] && (
-                                        <ol>
-                                          {reorderedSources
-                                            .filter(source => !source.isCited)
-                                            .map((source, index) => (
-                                              <li key={index}>
-                                                <img 
-                                                  src={getFaviconUrl(source.link)} 
-                                                  alt=""
-                                                  className="source-favicon"
-                                                  onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                  }}
-                                                />
-                                                <a href={source.link} target="_blank" rel="noopener noreferrer">
-                                                  {source.title}
-                                                  {source.date && ` (${source.date})`}
-                                                </a>
-                                              </li>
-                                            ))}
-                                        </ol>
-                                      )}
-                                    </>
-                                  )}
-                                </>
-                              );
-                            })()}
-                          </div>
-                        )}
-                        <div className="markdown-content">
-                          <ReactMarkdown components={markdownComponents}>
-                            {processMarkdownWithCitations(msg.answer, msg.sources)?.processedText || msg.answer}
-                          </ReactMarkdown>
+                                    )}
+                                  </>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
-                        <small>{msg.timestamp}</small>
+                      )}
+                      <div className="markdown-content">
+                        <ReactMarkdown components={markdownComponents}>
+                          {processMarkdownWithCitations(msg.answer, msg.sources)?.processedText || msg.answer}
+                        </ReactMarkdown>
                       </div>
-                    )}
+                      <small>{msg.timestamp}</small>
+                    </div>
                   </div>
                 ))}
             </div>

@@ -424,3 +424,13 @@ small {
 .markdown-content a:not([href^="http"]):hover {
   text-decoration: underline;
 }
+
+/* Update search query styles */
+.search-query {
+  font-size: 0.9em;
+  color: #666;
+  margin: 10px 0 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
