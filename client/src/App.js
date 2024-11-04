@@ -28,14 +28,6 @@ function App() {
         });
         const data = await response.json();
         setConversations(data);
-        
-        // Move this check inside a separate setActiveConversation call
-        // setActiveConversationId(prevId => {
-        //   if (data.length > 0 && !prevId) {
-        //     return data[0].id;
-        //   }
-        //   return prevId;
-        // });
       } catch (error) {
         console.error('Error fetching conversations:', error);
       }
@@ -189,7 +181,13 @@ function App() {
               try {
                 const parsed = JSON.parse(data);
                 
-                if (parsed.type === 'searching') {
+                if (parsed.type === 'title') {
+                  setConversations(prev => prev.map(conv => 
+                    conv.id === currentConversationId 
+                      ? { ...conv, title: parsed.title }
+                      : conv
+                  ));
+                } else if (parsed.type === 'searching') {
                   setSearchStatus(parsed.searchQuery);
                 } else if (parsed.type === 'content') {
                   const currentAnswer = answer + parsed.content;
@@ -359,7 +357,7 @@ function App() {
                   }, 0);
                 }}
               >
-                {conv.messages[0]?.text.substring(0, 26)}...
+                {conv.title || (conv.messages[0]?.text.substring(0, 26) + "...")}
               </div>
               <button
                 className="delete-conversation-btn"

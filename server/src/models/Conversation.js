@@ -18,6 +18,7 @@ const messageSchema = new mongoose.Schema({
 const conversationSchema = new mongoose.Schema({
   id: String,
   userId: String,
+  title: String,
   messages: [messageSchema],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

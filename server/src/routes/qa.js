@@ -41,6 +41,25 @@ router.get('/conversations/:id', async (req, res) => {
   }
 });
 
+// Add this helper function at the top of the file
+async function generateConversationTitle(question, answer) {
+  const titleResponse = await openai.chat.completions.create({
+    messages: [
+      {
+        role: "system",
+        content: "Create a brief, engaging title (maximum 20 characters) that summarizes this conversation. Return only the title text."
+      },
+      {
+        role: "user",
+        content: `Question: ${question}\nAnswer: ${answer}`
+      }
+    ],
+    model: "gpt-3.5-turbo",
+  });
+
+  return titleResponse.choices[0].message.content.trim().replace(/^["']+|["']+$/g, '');
+}
+
 // Update existing stream route to save conversations
 router.post('/stream', async (req, res) => {
   try {
@@ -205,6 +224,7 @@ router.post('/stream', async (req, res) => {
         })}\n\n`);
       }
     }
+    console.log('Full answer:', fullAnswer);
 
     // Generate follow-up questions after the main answer
     const followUpResponse = await openai.chat.completions.create({
@@ -222,6 +242,7 @@ router.post('/stream', async (req, res) => {
     });
 
     const followUpQuestions = followUpResponse.choices[0].message.content.split('\n').filter(q => q.trim());
+    console.log('Follow-up questions:', followUpQuestions);
 
     // Send follow-up questions to client
     res.write(`data: ${JSON.stringify({ 
@@ -229,8 +250,6 @@ router.post('/stream', async (req, res) => {
       questions: followUpQuestions
     })}\n\n`);
 
-    res.write('data: [DONE]\n\n');
-    res.end();
 
     // Update the message with the complete answer, sources, and follow-up questions
     conversation.messages[conversation.messages.length - 1].answer = fullAnswer;
@@ -242,6 +261,23 @@ router.post('/stream', async (req, res) => {
     conversation.messages[conversation.messages.length - 1].followUpQuestions = followUpQuestions;
 
     await conversation.save();
+
+    // Generate title if this is the first message
+    if (conversation.messages.length === 1) {
+      const title = await generateConversationTitle(question, fullAnswer);
+      conversation.title = title;
+      await conversation.save();
+      
+      // Send title update to client
+      res.write(`data: ${JSON.stringify({ 
+        type: 'title',
+        title: title
+      })}\n\n`);
+      console.log('Title sent to client:', title);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Failed to get answer' });
