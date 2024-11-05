@@ -297,6 +297,13 @@ function App() {
     sendMessage(questionText);
   };
 
+  const exampleQuestions = [
+    "What's the best way to handle toddler tantrums?",
+    "How can I establish a good sleep routine for my baby?",
+    "What are some healthy snacks for picky toddlers?",
+    "When should I start potty training?"
+  ];
+
   return (
     <div className="App">
       <aside className="sidebar">
@@ -535,6 +542,20 @@ function App() {
                 rows="3"
               />
             </form>
+            <div className="example-questions">
+              <h3>Try asking about:</h3>
+              <div className="example-buttons">
+                {exampleQuestions.map((q, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setQuestion(q)}
+                    className="example-button"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="empty-chat-hint">
               Press Enter to submit, Shift+Enter for new line
             </div>
