@@ -543,21 +543,22 @@ function App() {
               />
             </form>
             <div className="example-questions">
-              <h3>Try asking about:</h3>
               <div className="example-buttons">
                 {exampleQuestions.map((q, index) => (
                   <button
                     key={index}
-                    onClick={() => setQuestion(q)}
+                    onClick={() => {
+                      setQuestion(q);
+                      setTimeout(() => {
+                        textareaRef.current?.focus();
+                      }, 0);
+                    }}
                     className="example-button"
                   >
                     {q}
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="empty-chat-hint">
-              Press Enter to submit, Shift+Enter for new line
             </div>
           </div>
         )}

@@ -379,14 +379,6 @@ small {
   max-width: 600px;
 }
 
-/* Optional: add some helper text */
-.empty-chat-hint {
-  color: #666;
-  text-align: center;
-  margin-top: 10px;
-  font-size: 0.9em;
-}
-
 .sources-section h5 {
   margin: 10px 0 5px;
   font-size: 0.9em;
