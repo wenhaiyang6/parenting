@@ -248,13 +248,6 @@ textarea:focus {
   background-color: #f4f4f4;
 }
 
-small {
-  color: #666;
-  font-size: 0.9em;
-  display: block;
-  margin-top: 5px;
-}
-
 .sources-section {
   margin-bottom: 1rem;
   padding: 1rem;

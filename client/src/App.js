@@ -501,7 +501,6 @@ function App() {
                           </div>
                         )}
                       </div>
-                      <small>{msg.timestamp}</small>
                     </div>
                   </div>
                 ))}
